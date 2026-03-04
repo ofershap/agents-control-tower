@@ -55,6 +55,18 @@ One command. The tower lights up.
 
 ---
 
+<a id="the-dashboard"></a>
+
+## The Dashboard
+
+<p align="center">
+  <img src="assets/screenshot.png" alt="agents-control-tower dashboard" width="820" />
+</p>
+
+Running agents pulse amber. Done agents link to their PR. Errors glow red.
+
+---
+
 ## What's Different
 
 | | Cursor web dashboard | Conduit | SwarmClaw | agents-control-tower |
@@ -66,18 +78,6 @@ One command. The tower lights up.
 | Local agent hooks | no | no | no | Phase 2 |
 | Retro ASCII aesthetic | no | no | no | yes |
 | One command install | n/a | yes | no | yes |
-
----
-
-<a id="the-dashboard"></a>
-
-## The Dashboard
-
-<p align="center">
-  <img src="assets/screenshot.png" alt="agents-control-tower dashboard" width="820" />
-</p>
-
-Running agents pulse amber. Done agents link to their PR. Errors glow red.
 
 ---
 
