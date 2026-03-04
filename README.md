@@ -106,35 +106,11 @@ CURSOR_API_KEY=sk-... npx agents-control-tower
 
 ## The Dashboard
 
-```
-   A G E N T S                                            ╻
-   ╔═╗╔═╗╔╗╔╦╗╔═╗╔═╗╔╗                            ╻ ┃ ╻
-   ║  ║║ ║║║║ ║╠═╝║ ║║║                           ┏━━┻━━┓
-   ║  ║║ ║║╚╝ ║║╚╗║ ║║╚╗                         ┃░▓░░▓░┃
-   ╚═╝╚═╝╝ ╚═╝╚═╝╚═╝╚═╝                          ┣━━━━━━┫
-   ╔╦╗╔═╗╔╗╔╗╔═╗╔═╗                                ┃ ░░ ┃
-   ║ ║║ ║║║║║║╣ ╠═╝                                ┃ ░░ ┃
-   ╝ ╚╚═╝╚╩╝╚╚═╝╚═╝                               ┗━━━━┛
-   ░░░░ launch · watch · command ░░░░             ━━┻━━━━┻━━
+<p align="center">
+  <img src="assets/screenshot.png" alt="agents-control-tower dashboard" width="820" />
+</p>
 
-   3 running    1 done    1 error                 synced 2s ago
-
- ┌─ cloud ──────────────────────────────────────────────────────┐
- │ ▸◉  Add auth middleware       ofershap/myapp       4m 12s   │
- │  ◉  Fix payment webhook       ofershap/myapp       2m 45s   │
- │  ✔  Update README             ofershap/tools   done → PR #42│
- │  ✖  Refactor DB queries       ofershap/api    error: tests  │
- └──────────────────────────────────────────────────────────────┘
-
- ┌─ activity ───────────────────────────────────────────────────┐
- │  2m ago   ✔  "Update README" finished · PR #42 created      │
- │  4m ago   ◉  "Fix payment" started on ofershap/myapp        │
- └──────────────────────────────────────────────────────────────┘
-
- n new agent  ↑↓ navigate  enter details  s stop  d delete  q quit
-```
-
-The header has a pixel-art control tower with blinking antenna lights, a radar sweep in the observation deck, and orbiting dots for each running agent. The tower glows amber when agents are active, green when all are done, and red when something failed.
+Running agents pulse amber. Finished agents show their PR link. Errors glow red. The tower icon lights up based on fleet status — amber when agents are active, green when all done, red when something failed.
 
 ---
 
@@ -149,9 +125,11 @@ The tower talks to two data sources:
 | Cursor Cloud API | List, launch, stop, delete agents. Get conversations and artifacts | REST API, polled every 5s |
 | Cursor Hooks (Phase 2) | See local IDE agent sessions, file edits, shell commands | File-based event stream |
 
-```
-  Cursor Cloud API ──→ Poller (5s) ──→ State Store ──→ Ink TUI
-  Cursor Hooks     ──→ File Watcher ──→ State Store ──→ Ink TUI
+```mermaid
+graph LR
+    A[Cursor Cloud API] -->|poll 5s| B[State Store]
+    C[Cursor Hooks] -->|file watcher| B
+    B --> D[Ink TUI]
 ```
 
 ### Tech Stack
