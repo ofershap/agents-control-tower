@@ -3,36 +3,119 @@ import { Box, Text } from "ink";
 import type { AgentStats } from "../lib/types.js";
 
 const AMBER = "#e8912d";
+const AMBER_DARK = "#c67b1c";
 const GOLD = "#d4a843";
 const DIM = "#4a6785";
 const BLUE = "#4a90c4";
+const TEAL = "#2d7d7d";
 const RED = "#f85149";
 const GREEN = "#3fb950";
+const BORDER_COLOR = "#1e3a5f";
 
-const TITLE_AGENTS = "A G E N T S";
-
-const CONTROL = [
-  "╔═╗╔═╗╔╗╔╦╗╔═╗╔═╗╔╗  ",
-  "║  ║║ ║║║║ ║╠═╝║ ║║║  ",
-  "║  ║║ ║║╚╝ ║║╚╗║ ║║╚╗ ",
-  "╚═╝╚═╝╝ ╚═╝╚═╝╚═╝╚═╝ ",
+// Original pixel-art block font — 2 rows per word, uses █▀▄░
+const CONTROL_LINES = [
+  "█▀▀ █▀█ █▄░█ ▀█▀ █▀█ █▀█ █░░",
+  "█▄▄ █▄█ █░▀█ ░█░ █▀▄ █▄█ █▄▄",
 ];
 
-const TOWER_TEXT = [
-  "╔╦╗╔═╗╔╗╔╗╔═╗╔═╗",
-  "║ ║║ ║║║║║║╣ ╠═╝",
-  "╝ ╚╚═╝╚╩╝╚╚═╝╚═╝",
+const TOWER_WORD = [
+  "▀█▀ █▀█ █░█░█ █▀▀ █▀█",
+  "░█░ █▄█ ▀▄▀▄▀ ██▄ █▀▄",
 ];
 
-const RADAR_FRAMES = ["░▓░░▓░", "░░▓░░▓", "▓░░▓░░"];
+const RADAR_FRAMES = [
+  [" ", "#", " ", "#", " ", "#", " "],
+  ["#", " ", "#", " ", "#", " ", "#"],
+  [" ", "#", " ", "#", " ", "#", " "],
+];
 
-interface HeaderProps {
-  stats: AgentStats;
-  lastSync: Date | null;
-  compact?: boolean;
+interface Segment { text: string; color: string }
+
+function buildTowerLines(
+  radarIdx: number,
+  blinkState: boolean[],
+  windowColor: string,
+): Segment[][] {
+  const ac = (i: number) => blinkState[i] ? RED : AMBER;
+  const TUBE = AMBER_DARK;
+
+  const radar = RADAR_FRAMES[radarIdx]!;
+  const radarSegs: Segment[] = radar.map(ch =>
+    ch === "#" ? { text: "#", color: BLUE } : { text: " ", color: DIM }
+  );
+
+  // 15 chars per line, box-drawing chars matching the title style
+  return [
+    // row 0: "       ║       "
+    [
+      { text: "       ", color: DIM },
+      { text: "║", color: ac(1) },
+      { text: "       ", color: DIM },
+    ],
+    // row 1: "   ║   ║   ║   "
+    [
+      { text: "   ", color: DIM },
+      { text: "║", color: ac(0) },
+      { text: "   ", color: DIM },
+      { text: "║", color: TUBE },
+      { text: "   ", color: DIM },
+      { text: "║", color: ac(2) },
+      { text: "   ", color: DIM },
+    ],
+    // row 2: "  ╔═════════╗  "
+    [
+      { text: "  ", color: DIM },
+      { text: "╔═════════╗", color: AMBER },
+      { text: "  ", color: DIM },
+    ],
+    // row 3: "  ║ # # # # ║  "
+    [
+      { text: "  ", color: DIM },
+      { text: "║ ", color: AMBER },
+      ...radarSegs,
+      { text: " ║", color: AMBER },
+      { text: "  ", color: DIM },
+    ],
+    // row 4: "  ╠═════════╣  "
+    [
+      { text: "  ", color: DIM },
+      { text: "╠", color: AMBER },
+      { text: "═════════", color: windowColor },
+      { text: "╣", color: AMBER },
+      { text: "  ", color: DIM },
+    ],
+    // row 5: "  ╚═════════╝  "
+    [
+      { text: "  ", color: DIM },
+      { text: "╚═════════╝", color: AMBER },
+      { text: "  ", color: DIM },
+    ],
+    // row 6: "     ║   ║     "
+    [
+      { text: "     ", color: DIM },
+      { text: "║", color: TUBE },
+      { text: "   ", color: DIM },
+      { text: "║", color: TUBE },
+      { text: "     ", color: DIM },
+    ],
+    // row 7: "     ║ o ║     "
+    [
+      { text: "     ", color: DIM },
+      { text: "║", color: TUBE },
+      { text: " o ", color: windowColor },
+      { text: "║", color: TUBE },
+      { text: "     ", color: DIM },
+    ],
+    // row 8: "  ══╩═════╩══  "
+    [
+      { text: "  ", color: DIM },
+      { text: "══╩═════╩══", color: AMBER },
+      { text: "  ", color: DIM },
+    ],
+  ];
 }
 
-function TowerArt({ runningCount }: { runningCount: number }) {
+function TowerArt({ runningCount, hasError }: { runningCount: number; hasError: boolean }) {
   const [frame, setFrame] = useState(0);
   const [blink, setBlink] = useState([false, true, false]);
 
@@ -45,48 +128,25 @@ function TowerArt({ runningCount }: { runningCount: number }) {
         next[idx] = !next[idx];
         return next;
       });
-    }, 800);
+    }, 700);
     return () => {
       clearInterval(radarTimer);
       clearInterval(blinkTimer);
     };
   }, []);
 
-  const antennaColor = (i: number) => (blink[i] ? RED : DIM);
-  const windowChar = runningCount > 0 ? "░▓" : "░░";
-  const windowColor =
-    runningCount > 0 ? AMBER : DIM;
-  const radar = RADAR_FRAMES[frame]!;
+  const windowColor = hasError ? RED : runningCount > 0 ? AMBER : DIM;
+  const lines = buildTowerLines(frame, blink, windowColor);
 
   return (
-    <Box flexDirection="column" alignItems="flex-end">
-      <Text>
-        <Text color={antennaColor(1)}>{"     ╻"}</Text>
-      </Text>
-      <Text>
-        <Text color={antennaColor(0)}>{"   ╻"}</Text>
-        <Text color={DIM}>{" ┃ "}</Text>
-        <Text color={antennaColor(2)}>{"╻"}</Text>
-      </Text>
-      <Text color={DIM}>{"  ┏━━┻━━┓"}</Text>
-      <Text>
-        <Text color={DIM}>{" ┃"}</Text>
-        <Text color={BLUE}>{radar}</Text>
-        <Text color={DIM}>{"┃"}</Text>
-      </Text>
-      <Text color={DIM}>{" ┣━━━━━━┫"}</Text>
-      <Text>
-        <Text color={DIM}>{"  ┃ "}</Text>
-        <Text color={windowColor}>{windowChar}</Text>
-        <Text color={DIM}>{" ┃"}</Text>
-      </Text>
-      <Text>
-        <Text color={DIM}>{"  ┃ "}</Text>
-        <Text color={windowColor}>{windowChar}</Text>
-        <Text color={DIM}>{" ┃"}</Text>
-      </Text>
-      <Text color={DIM}>{"  ┗━━━━┛"}</Text>
-      <Text color={DIM}>{"━━┻━━━━┻━━"}</Text>
+    <Box flexDirection="column" marginRight={3}>
+      {lines.map((segments, i) => (
+        <Text key={i} wrap="truncate">
+          {segments.map((seg, j) => (
+            <Text key={j} color={seg.color}>{seg.text}</Text>
+          ))}
+        </Text>
+      ))}
     </Box>
   );
 }
@@ -113,6 +173,12 @@ function SyncIndicator({ lastSync }: { lastSync: Date | null }) {
   return <Text color={color}>{label}</Text>;
 }
 
+interface HeaderProps {
+  stats: AgentStats;
+  lastSync: Date | null;
+  compact?: boolean;
+}
+
 export function Header({ stats, lastSync, compact }: HeaderProps) {
   if (compact) {
     return (
@@ -120,19 +186,19 @@ export function Header({ stats, lastSync, compact }: HeaderProps) {
         <Text bold color={AMBER}>
           AGENTS CONTROL TOWER
         </Text>
-        <Text color={DIM}> · </Text>
+        <Text color={DIM}> | </Text>
         {stats.running > 0 && (
           <Text color={AMBER}>{stats.running} run</Text>
         )}
         {stats.completed > 0 && (
           <>
-            <Text color={DIM}> · </Text>
+            <Text color={DIM}> | </Text>
             <Text color={GREEN}>{stats.completed} done</Text>
           </>
         )}
         {stats.error > 0 && (
           <>
-            <Text color={DIM}> · </Text>
+            <Text color={DIM}> | </Text>
             <Text color={RED}>{stats.error} err</Text>
           </>
         )}
@@ -141,31 +207,39 @@ export function Header({ stats, lastSync, compact }: HeaderProps) {
   }
 
   return (
-    <Box flexDirection="column">
-      <Box justifyContent="space-between">
-        <Box flexDirection="column">
-          <Text color={GOLD}> {TITLE_AGENTS}</Text>
-          {CONTROL.map((line, i) => (
-            <Text key={`c${i}`} color={AMBER} bold>
-              {" "}
-              {line}
+    <Box flexDirection="column" paddingTop={1}>
+      <Box>
+        <Box flexDirection="column" paddingLeft={2}>
+          <Text color={GOLD} bold>{"  A G E N T S"}</Text>
+          <Text> </Text>
+          {CONTROL_LINES.map((line, i) => (
+            <Text key={`c${i}`} color={AMBER} bold wrap="truncate">
+              {"  "}{line}
             </Text>
           ))}
-          {TOWER_TEXT.map((line, i) => (
-            <Text key={`t${i}`} color={AMBER} bold>
-              {" "}
-              {line}
+          <Text> </Text>
+          {TOWER_WORD.map((line, i) => (
+            <Text key={`t${i}`} color={AMBER_DARK} bold wrap="truncate">
+              {"  "}{line}
             </Text>
           ))}
-          <Text color={DIM}>
-            {" "}
-            ░░░░ launch · watch · command ░░░░
+          <Text> </Text>
+          <Text wrap="truncate">
+            <Text color={BORDER_COLOR}>{"  ░░░░"}</Text>
+            <Text color={TEAL}>{" launch"}</Text>
+            <Text color={DIM}>{" · "}</Text>
+            <Text color={TEAL}>{"watch"}</Text>
+            <Text color={DIM}>{" · "}</Text>
+            <Text color={TEAL}>{"command"}</Text>
+            <Text color={DIM}>{" "}</Text>
+            <Text color={BORDER_COLOR}>{"░░░░"}</Text>
           </Text>
         </Box>
-        <TowerArt runningCount={stats.running} />
+        <TowerArt runningCount={stats.running} hasError={stats.error > 0} />
       </Box>
-      <Box marginTop={1} justifyContent="space-between">
-        <Box gap={2}>
+
+      <Box marginTop={1} justifyContent="space-between" paddingX={2}>
+        <Box gap={3}>
           {stats.running > 0 && (
             <Text color={AMBER} bold>
               {stats.running} running

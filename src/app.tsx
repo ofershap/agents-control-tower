@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Box, Text, useInput, useApp, useStdout } from "ink";
 import { Header } from "./components/header.js";
 import { CloudAgentsTable } from "./components/cloud-agents-table.js";
@@ -19,11 +19,15 @@ import type { Screen, AppConfig } from "./lib/types.js";
 const DIM = "#4a6785";
 const AMBER = "#e8912d";
 const BODY = "#c9d1d9";
+const BORDER_COLOR = "#1e3a5f";
+const LABEL = "#4a90c4";
+const TEAL = "#2d7d7d";
 
-function Dashboard({ apiKey }: { apiKey: string }) {
+function Dashboard({ apiKey, onReconfigure }: { apiKey: string; onReconfigure: () => void }) {
   const { exit } = useApp();
   const { stdout } = useStdout();
   const cols = stdout?.columns ?? 80;
+  const rows = stdout?.rows ?? 24;
   const compact = cols < 80;
 
   const {
@@ -46,23 +50,42 @@ function Dashboard({ apiKey }: { apiKey: string }) {
   const [screen, setScreen] = useState<Screen>({ type: "dashboard" });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [confirmAction, setConfirmAction] = useState<{
-    type: "stop" | "delete";
+    type: "stop" | "delete" | "reconfigure";
     agentId: string;
     agentName: string;
   } | null>(null);
+  const [pendingQuit, setPendingQuit] = useState(false);
+  const quitTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const goToDashboard = useCallback(() => {
     setScreen({ type: "dashboard" });
     setConfirmAction(null);
+    setPendingQuit(false);
   }, []);
 
   useInput(
     (input, key) => {
       if (screen.type !== "dashboard" || confirmAction) return;
 
-      if (input === "q") exit();
+      if (input === "q") {
+        if (pendingQuit) {
+          exit();
+        } else {
+          setPendingQuit(true);
+          clearTimeout(quitTimer.current);
+          quitTimer.current = setTimeout(() => setPendingQuit(false), 3000);
+        }
+        return;
+      }
+      if (pendingQuit) {
+        setPendingQuit(false);
+        return;
+      }
       if (input === "r") refresh();
       if (input === "n") setScreen({ type: "launch", step: 1 });
+      if (input === "c") {
+        setConfirmAction({ type: "reconfigure", agentId: "", agentName: "" });
+      }
 
       if (key.upArrow || input === "k") {
         setSelectedIndex((i) => Math.max(0, i - 1));
@@ -97,11 +120,11 @@ function Dashboard({ apiKey }: { apiKey: string }) {
 
   if (error && agents.length === 0) {
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" borderStyle="double" borderColor={BORDER_COLOR} paddingX={1} minHeight={rows}>
         <Header stats={stats} lastSync={lastSync} compact={compact} />
         <ErrorState
           error={error}
-          onReconfigure={() => {}}
+          onReconfigure={onReconfigure}
           onRetry={refresh}
           onQuit={() => exit()}
         />
@@ -175,7 +198,7 @@ function Dashboard({ apiKey }: { apiKey: string }) {
 
   if (loading && agents.length === 0) {
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" borderStyle="double" borderColor={BORDER_COLOR} paddingX={1} minHeight={rows}>
         <Header stats={stats} lastSync={null} compact={compact} />
         <Box paddingY={2} justifyContent="center">
           <Text color={AMBER}>Connecting to Cursor API...</Text>
@@ -185,7 +208,13 @@ function Dashboard({ apiKey }: { apiKey: string }) {
   }
 
   return (
-    <Box flexDirection="column">
+    <Box
+      flexDirection="column"
+      borderStyle="double"
+      borderColor={BORDER_COLOR}
+      paddingX={1}
+      minHeight={rows}
+    >
       <Header stats={stats} lastSync={lastSync} compact={compact} />
 
       {agents.length === 0 ? (
@@ -201,14 +230,18 @@ function Dashboard({ apiKey }: { apiKey: string }) {
               message={
                 confirmAction.type === "stop"
                   ? `Stop "${confirmAction.agentName}"?`
-                  : `Delete "${confirmAction.agentName}"? This is permanent.`
+                  : confirmAction.type === "delete"
+                  ? `Delete "${confirmAction.agentName}"? This is permanent.`
+                  : `Reset config and re-run setup?`
               }
-              destructive={confirmAction.type === "delete"}
+              destructive={confirmAction.type !== "stop"}
               onConfirm={async () => {
                 if (confirmAction.type === "stop") {
                   await stop(confirmAction.agentId);
-                } else {
+                } else if (confirmAction.type === "delete") {
                   await remove(confirmAction.agentId);
+                } else {
+                  onReconfigure();
                 }
                 setConfirmAction(null);
               }}
@@ -218,34 +251,67 @@ function Dashboard({ apiKey }: { apiKey: string }) {
         </Box>
       )}
 
+      <Box
+        marginTop={1}
+        flexDirection="column"
+        borderStyle="single"
+        borderColor={BORDER_COLOR}
+      >
+        <Box>
+          <Text color={LABEL} bold>
+            {" "}local{" "}
+          </Text>
+        </Box>
+        <Box paddingX={2} paddingY={0}>
+          <Text color={DIM}>
+            No local sessions detected · install hooks with{" "}
+            <Text color={TEAL}>c</Text>
+          </Text>
+        </Box>
+      </Box>
+
       {activity.length > 0 && (
         <Box marginTop={1}>
           <ActivityFeed events={activity} />
         </Box>
       )}
 
-      <Box marginTop={1} gap={2}>
-        <Text color={AMBER}>n</Text>
-        <Text color={BODY}>new agent</Text>
-        <Text color={DIM}>↑↓</Text>
-        <Text color={BODY}>navigate</Text>
-        <Text color={AMBER}>enter</Text>
-        <Text color={BODY}>details</Text>
-        <Text color={AMBER}>s</Text>
-        <Text color={BODY}>stop</Text>
-        <Text color={AMBER}>d</Text>
-        <Text color={BODY}>delete</Text>
-        <Text color={AMBER}>r</Text>
-        <Text color={BODY}>refresh</Text>
-        <Text color={AMBER}>q</Text>
-        <Text color={BODY}>quit</Text>
+      <Box flexGrow={1} />
+
+      <Box paddingX={0}>
+        {pendingQuit ? (
+          <Text color="#f85149" bold backgroundColor="#1a0000" inverse>
+            {" "}Press q again to quit, any other key to cancel{" "}
+          </Text>
+        ) : (
+          <Text>
+            <Text backgroundColor={AMBER} color="#000000" bold> n </Text>
+            <Text color={BODY}> new </Text>
+            <Text backgroundColor={DIM} color="#000000" bold> ↑↓ </Text>
+            <Text color={BODY}> nav </Text>
+            <Text backgroundColor={AMBER} color="#000000" bold> ⏎ </Text>
+            <Text color={BODY}> detail </Text>
+            <Text backgroundColor={AMBER} color="#000000" bold> s </Text>
+            <Text color={BODY}> stop </Text>
+            <Text backgroundColor={AMBER} color="#000000" bold> d </Text>
+            <Text color={BODY}> delete </Text>
+            <Text backgroundColor={AMBER} color="#000000" bold> f </Text>
+            <Text color={BODY}> follow-up </Text>
+            <Text backgroundColor={AMBER} color="#000000" bold> r </Text>
+            <Text color={BODY}> refresh </Text>
+            <Text backgroundColor={DIM} color="#000000" bold> c </Text>
+            <Text color={BODY}> config </Text>
+            <Text backgroundColor={AMBER} color="#000000" bold> q </Text>
+            <Text color={BODY}> quit</Text>
+          </Text>
+        )}
       </Box>
     </Box>
   );
 }
 
 export function App() {
-  const { config, loading: configLoading, save } = useConfig();
+  const { config, loading: configLoading, save, reset } = useConfig();
   const { exit } = useApp();
 
   if (configLoading) {
@@ -267,5 +333,5 @@ export function App() {
     );
   }
 
-  return <Dashboard apiKey={config.apiKey} />;
+  return <Dashboard apiKey={config.apiKey} onReconfigure={reset} />;
 }

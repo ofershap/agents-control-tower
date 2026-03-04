@@ -11,6 +11,9 @@ const DIM = "#4a6785";
 const AMBER = "#e8912d";
 const GREEN = "#3fb950";
 const RED = "#f85149";
+const SELECTED_BG = "#13243d";
+
+const MAX_VISIBLE = 5;
 
 interface AgentRowProps {
   agent: CloudAgent;
@@ -35,40 +38,37 @@ function AgentRow({ agent, selected }: AgentRowProps) {
 
   const rightInfo = (() => {
     if (agent.status === "RUNNING" || agent.status === "CREATING") {
-      return <Text color={DIM}>{elapsed}</Text>;
+      return { text: elapsed, color: DIM };
     }
     if (agent.status === "FINISHED" && agent.target.prUrl) {
       const prNum = agent.target.prUrl.match(/\/pull\/(\d+)/)?.[1];
-      return <Text color={GREEN}>done → PR #{prNum ?? "?"}</Text>;
+      return { text: `done → PR #${prNum ?? "?"}`, color: GREEN };
     }
     if (agent.status === "ERROR") {
       const msg = agent.summary?.slice(0, 30) ?? "error";
-      return <Text color={RED}>error: {msg}</Text>;
+      return { text: `error: ${msg}`, color: RED };
     }
     if (agent.status === "EXPIRED") {
-      return <Text color={DIM}>expired</Text>;
+      return { text: "expired", color: DIM };
     }
-    return <Text color={GREEN}>done</Text>;
+    return { text: "done", color: GREEN };
   })();
+
+  const bg = selected ? SELECTED_BG : undefined;
 
   return (
     <Box>
-      <Text color={selected ? AMBER : undefined}>
-        {selected ? "▸" : " "}
+      <Text backgroundColor={bg}>
+        <Text color={selected ? AMBER : DIM}>{selected ? " ▸ " : "   "}</Text>
       </Text>
-      <StatusBadge status={agent.status} />
-      <Text>{"  "}</Text>
-      <Box width={32}>
-        <Text color={BODY} wrap="truncate">
-          {name}
-        </Text>
+      <Box width={2}>
+        <StatusBadge status={agent.status} />
       </Box>
-      <Box width={22}>
-        <Text color={DIM} wrap="truncate">
-          {repoShortName(agent.source.repository)}
-        </Text>
-      </Box>
-      <Box flexGrow={1}>{rightInfo}</Box>
+      <Text backgroundColor={bg}>
+        <Text color={selected ? "#ffffff" : BODY}> {name.padEnd(30)}</Text>
+        <Text color={DIM}> {repoShortName(agent.source.repository).padEnd(22)}</Text>
+        <Text color={rightInfo.color}> {rightInfo.text}</Text>
+      </Text>
     </Box>
   );
 }
@@ -84,21 +84,49 @@ export function CloudAgentsTable({
 }: CloudAgentsTableProps) {
   if (agents.length === 0) return null;
 
+  const total = agents.length;
+  const needsScroll = total > MAX_VISIBLE;
+
+  let startIdx = 0;
+  if (needsScroll) {
+    startIdx = Math.max(0, Math.min(selectedIndex - 2, total - MAX_VISIBLE));
+  }
+  const visibleAgents = needsScroll
+    ? agents.slice(startIdx, startIdx + MAX_VISIBLE)
+    : agents;
+
+  const hasMore = needsScroll && startIdx + MAX_VISIBLE < total;
+  const hasAbove = needsScroll && startIdx > 0;
+
   return (
     <Box flexDirection="column" borderStyle="single" borderColor={BORDER}>
-      <Box>
+      <Box justifyContent="space-between">
         <Text color={LABEL} bold>
-          {" "}
-          cloud{" "}
+          {" "}cloud{" "}
         </Text>
+        {needsScroll && (
+          <Text color={DIM}>
+            {" "}{selectedIndex + 1}/{total}{" "}
+          </Text>
+        )}
       </Box>
-      {agents.map((agent, i) => (
+      {hasAbove && (
+        <Box paddingX={1}>
+          <Text color={DIM}>  ↑ {startIdx} more</Text>
+        </Box>
+      )}
+      {visibleAgents.map((agent, i) => (
         <AgentRow
           key={agent.id}
           agent={agent}
-          selected={i === selectedIndex}
+          selected={startIdx + i === selectedIndex}
         />
       ))}
+      {hasMore && (
+        <Box paddingX={1}>
+          <Text color={DIM}>  ↓ {total - startIdx - MAX_VISIBLE} more</Text>
+        </Box>
+      )}
     </Box>
   );
 }

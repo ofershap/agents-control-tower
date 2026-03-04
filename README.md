@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="agents-control-tower" width="100" height="100" />
+  <img src="assets/tower-icon.png" alt="agents-control-tower" width="120" height="120" />
 </p>
 
 <h1 align="center">agents-control-tower</h1>
@@ -9,69 +9,29 @@
 </p>
 
 <p align="center">
-  Five cloud agents in parallel. One is stuck. One finished and opened a PR.<br>
-  One errored out 10 minutes ago and you didn't notice.<br>
-  You're alt-tabbing between browser tabs trying to keep track.
-</p>
-
-<p align="center">
-  <em>Welcome aboard the control tower. One terminal. All your agents. Full control.</em>
-</p>
-
-<p align="center">
-  <a href="#quick-start"><img src="https://img.shields.io/badge/TRY_IT_NOW-2ea44f?style=for-the-badge" alt="Try It Now" /></a>
-  &nbsp;
-  <a href="#quick-start"><img src="https://img.shields.io/badge/INSTALL-0969da?style=for-the-badge" alt="Install" /></a>
-  &nbsp;
-  <a href="#the-dashboard"><img src="https://img.shields.io/badge/SEE_DASHBOARD-8957e5?style=for-the-badge" alt="See Dashboard" /></a>
-</p>
-
-<p align="center">
   <a href="https://github.com/ofershap/agents-control-tower/actions/workflows/ci.yml"><img src="https://github.com/ofershap/agents-control-tower/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" /></a>
   <a href="https://github.com/ofershap/agents-control-tower/stargazers"><img src="https://img.shields.io/github/stars/ofershap/agents-control-tower?style=social" alt="GitHub Stars" /></a>
-  <a href="https://github.com/ofershap/agents-control-tower/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
 </p>
-
----
-
-## The Tower Is Watching
-
-You launched a Cursor cloud agent 20 minutes ago. Did it finish? Did it open a PR? Did it crash?
-
-Your options right now:
-- Open cursor.com, find the agents page, scroll, click, read
-- Check your email for a notification that may or may not come
-- Hope for the best
-
-`agents-control-tower` is a retro terminal dashboard that connects to the Cursor Cloud Agents API and shows you everything in one screen. Not just a viewer. You can launch new agents, send follow-up instructions, stop runaway agents, and delete finished ones. All without leaving your terminal.
 
 ```bash
 npx agents-control-tower
 ```
 
-That's it. One command. The tower lights up.
+One command. The tower lights up. Run it from any directory.
+
+<p align="center">
+  <img src="assets/screenshot.png" alt="agents-control-tower" width="820" />
+</p>
+
+Running agents pulse amber. Finished agents show their PR link. Errors glow red. The tower icon lights up based on fleet status — amber when agents are active, green when all done, red when something failed.
 
 ---
-
-## What's Different
-
-| | Cursor web dashboard | Conduit | SwarmClaw | **agents-control-tower** |
-|---|---|---|---|---|
-| Cursor-native | yes | no | no | **yes** |
-| Terminal UI | no | yes | no | **yes** |
-| Launch agents | no | no | partial | **yes** |
-| Follow-up / stop / delete | no | no | no | **yes** |
-| Local agent hooks | no | no | no | **Phase 2** |
-| Retro ASCII aesthetic | no | no | no | **yes** |
-| One command install | n/a | yes | no | **yes** |
-
----
-
-<a id="what-you-can-do"></a>
 
 ## What You Can Do
+
+Not just a viewer. Launch agents, send follow-ups, stop runaways, delete old ones. All from one terminal.
 
 | Key | Action | |
 |-----|--------|-|
@@ -81,17 +41,23 @@ That's it. One command. The tower lights up.
 | `d` | Delete an agent | Permanently remove |
 | `o` | Open in browser | Jump to the PR or agent URL |
 | `enter` | View details | Full conversation, metadata, status |
-| `↑↓` / `jk` | Navigate | Move between agents |
 | `r` | Refresh | Force a sync with Cursor API |
-
-The dashboard polls every 5 seconds. Running agents pulse amber. Finished agents show their PR link. Errors show what went wrong.
 
 ---
 
-## Quick Start
+## Install
+
+**Zero install** — run directly with npx:
 
 ```bash
 npx agents-control-tower
+```
+
+**Global install** — get the `agents-control-tower` command (and the short alias `act`) available everywhere:
+
+```bash
+npm install -g agents-control-tower
+act
 ```
 
 On first run, the setup wizard asks for your Cursor API key. Get one at [cursor.com/dashboard → Integrations](https://cursor.com/dashboard?tab=integrations). The key is saved to `~/.agents-control-tower/config.json`.
@@ -99,26 +65,12 @@ On first run, the setup wizard asks for your Cursor API key. Get one at [cursor.
 Or set it as an env var:
 
 ```bash
-CURSOR_API_KEY=sk-... npx agents-control-tower
+CURSOR_API_KEY=sk-... act
 ```
 
 ---
 
-## The Dashboard
-
-<p align="center">
-  <img src="assets/screenshot.png" alt="agents-control-tower dashboard" width="820" />
-</p>
-
-Running agents pulse amber. Finished agents show their PR link. Errors glow red. The tower icon lights up based on fleet status — amber when agents are active, green when all done, red when something failed.
-
----
-
-<a id="how-it-works"></a>
-
 ## How It Works
-
-The tower talks to two data sources:
 
 | Source | What | How |
 |--------|------|-----|
@@ -132,31 +84,19 @@ graph LR
     B --> D[Ink TUI]
 ```
 
-### Tech Stack
-
-| | |
-|---|---|
-| <img src="https://img.shields.io/badge/Ink_5-React_for_CLIs-61DAFB?logo=react&logoColor=white" alt="Ink" /> | TUI framework |
-| <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript" /> | Type safety |
-| <img src="https://img.shields.io/badge/Node.js-≥20-339933?logo=node.js&logoColor=white" alt="Node.js" /> | Runtime |
-| <img src="https://img.shields.io/badge/tsup-build-000000?logo=esbuild&logoColor=white" alt="tsup" /> | Bundler |
-| <img src="https://img.shields.io/badge/Vitest-testing-6E9F18?logo=vitest&logoColor=white" alt="Vitest" /> | Tests |
+Built with [Ink 5](https://github.com/vadimdemedes/ink) (React for CLIs), TypeScript strict, Node.js ≥ 20.
 
 ---
 
 ## Screens
 
-**Launch wizard** - 3 steps: pick repo (with fuzzy filter), write the task prompt, select model and launch. The new agent appears on the dashboard within seconds.
+**Launch wizard** — 3 steps: pick repo (with fuzzy filter), write the task prompt, select model and launch.
 
-**Agent detail** - Full metadata (repo, branch, base, started time, PR link), the prompt you gave it, and the latest message from the agent with scrollable history.
+**Agent detail** — Repo, branch, PR link, the prompt you gave it, and the latest message from the agent.
 
-**Follow-up** - Send new instructions to a running agent without leaving the terminal.
+**Follow-up** — Send new instructions to a running agent without leaving the terminal.
 
-**Stop / Delete** - Inline confirmation. Press `s` or `d` on any agent, hit `y` to confirm.
-
-**Setup** - First-run wizard. Paste your API key, optionally install local hooks.
-
-**Error state** - Clear error messages with fix instructions. Auto-retry with backoff.
+**Stop / Delete** — Inline confirmation. Press `s` or `d`, hit `y`.
 
 ---
 
@@ -173,11 +113,10 @@ graph LR
  d         delete selected
  r         force refresh            LAUNCH FLOW
  q         quit                     ──────────────────────────
- ?         help                     ↑↓        navigate options
-                                    /         filter repos
- GLOBAL                             enter     select / confirm
- ──────────────────────────         esc       cancel / go back
- ctrl+c    quit immediately
+                                    ↑↓        navigate options
+ GLOBAL                             /         filter repos
+ ──────────────────────────         enter     select / confirm
+ ctrl+c    quit immediately         esc       cancel / go back
  c         reconfigure
 ```
 
@@ -185,7 +124,7 @@ graph LR
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and guidelines.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions.
 
 ---
 
@@ -198,4 +137,4 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup inst
 
 ## License
 
-[MIT](LICENSE) &copy; [Ofer Shapira](https://github.com/ofershap)
+[MIT](LICENSE) © [Ofer Shapira](https://github.com/ofershap)

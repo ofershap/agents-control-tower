@@ -4,7 +4,8 @@
   "description": "Launch, watch, and command your Cursor agents from one terminal",
   "type": "module",
   "bin": {
-    "agents-control-tower": "./dist/index.js"
+    "agents-control-tower": "./dist/index.js",
+    "act": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [
@@ -56,6 +57,7 @@
     "@types/node": "^25.3.3",
     "@types/react": "^18.3.18",
     "ai-context-kit": "^0.1.1",
+    "canvas": "^3.2.1",
     "prettier": "^3.4.0",
     "tsup": "^8.4.0",
     "tsx": "^4.19.0",

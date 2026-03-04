@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text, useInput, useStdout } from "ink";
 import { TextInput, Select } from "@inkjs/ui";
 import { Header } from "./header.js";
 import { validateApiKey } from "../lib/cursor-api.js";
@@ -11,6 +11,7 @@ const DIM = "#4a6785";
 const AMBER = "#e8912d";
 const GREEN = "#3fb950";
 const RED = "#f85149";
+const BORDER_COLOR = "#1e3a5f";
 
 interface SetupWizardProps {
   onComplete: (config: AppConfig) => void;
@@ -18,13 +19,15 @@ interface SetupWizardProps {
 }
 
 export function SetupWizard({ onComplete, onQuit }: SetupWizardProps) {
+  const { stdout } = useStdout();
+  const rows = stdout?.rows ?? 24;
   const [step, setStep] = useState<1 | 2>(1);
   const [apiKey, setApiKey] = useState("");
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useInput((input) => {
-    if (input === "q" && step === 1 && !validating) onQuit();
+  useInput((_input, key) => {
+    if (key.escape && !validating) onQuit();
   });
 
   const handleApiKeySubmit = async () => {
@@ -44,7 +47,7 @@ export function SetupWizard({ onComplete, onQuit }: SetupWizardProps) {
 
   if (step === 1) {
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" borderStyle="double" borderColor={BORDER_COLOR} paddingX={1} minHeight={rows}>
         <Header stats={emptyStats} lastSync={null} />
         <Box marginTop={1}>
           <Text color={BODY}>
@@ -89,10 +92,11 @@ export function SetupWizard({ onComplete, onQuit }: SetupWizardProps) {
             Or set CURSOR_API_KEY env var and restart.
           </Text>
         </Box>
-        <Box marginTop={2} gap={2}>
+        <Box flexGrow={1} />
+        <Box gap={2}>
           <Text color={AMBER}>enter</Text>
           <Text color={BODY}>continue</Text>
-          <Text color={AMBER}>q</Text>
+          <Text color={AMBER}>esc</Text>
           <Text color={BODY}>quit</Text>
         </Box>
       </Box>
@@ -100,7 +104,7 @@ export function SetupWizard({ onComplete, onQuit }: SetupWizardProps) {
   }
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" borderStyle="double" borderColor={BORDER_COLOR} paddingX={1} minHeight={rows}>
       <Header stats={emptyStats} lastSync={null} />
       <Box marginTop={1}>
         <Text color={GREEN}>✔ API key validated</Text>
@@ -131,6 +135,15 @@ export function SetupWizard({ onComplete, onQuit }: SetupWizardProps) {
             });
           }}
         />
+      </Box>
+      <Box flexGrow={1} />
+      <Box gap={2}>
+        <Text color={AMBER}>↑↓</Text>
+        <Text color={BODY}>select</Text>
+        <Text color={AMBER}>enter</Text>
+        <Text color={BODY}>confirm</Text>
+        <Text color={AMBER}>esc</Text>
+        <Text color={BODY}>quit</Text>
       </Box>
     </Box>
   );

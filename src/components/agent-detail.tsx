@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text, useInput, useStdout } from "ink";
 import { StatusBadge, StatusLabel } from "./status-badge.js";
 import { useElapsed } from "../hooks/use-elapsed.js";
 import { getConversation } from "../lib/cursor-api.js";
@@ -38,6 +38,12 @@ export function AgentDetail({
 }: AgentDetailProps) {
   const elapsed = useElapsed(agent.createdAt);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const { stdout } = useStdout();
+  const termHeight = stdout?.rows ?? 24;
+  const headerLines = 12;
+  const footerLines = 3;
+  const availableLines = Math.max(5, termHeight - headerLines - footerLines);
 
   useEffect(() => {
     getConversation(apiKey, agent.id)
@@ -45,17 +51,25 @@ export function AgentDetail({
       .catch(() => {});
   }, [apiKey, agent.id]);
 
+  const lastAssistantMsg = [...messages]
+    .reverse()
+    .find((m) => m.type === "assistant_message");
+
+  const msgLines = lastAssistantMsg
+    ? lastAssistantMsg.text.split("\n")
+    : [];
+  const totalLines = msgLines.length;
+  const maxScroll = Math.max(0, totalLines - availableLines);
+
   useInput((input, key) => {
     if (key.escape) onBack();
     if (input === "f" && agent.status === "RUNNING") onFollowUp();
     if (input === "s" && agent.status === "RUNNING") onStop();
     if (input === "d") onDelete();
     if (input === "o") onOpenBrowser();
+    if (key.upArrow) setScrollOffset((s) => Math.max(0, s - 1));
+    if (key.downArrow) setScrollOffset((s) => Math.min(maxScroll, s + 1));
   });
-
-  const lastAssistantMsg = [...messages]
-    .reverse()
-    .find((m) => m.type === "assistant_message");
 
   return (
     <Box flexDirection="column" paddingX={1}>
@@ -134,40 +148,50 @@ export function AgentDetail({
           borderStyle="single"
           borderColor={BORDER}
           paddingX={1}
+          flexGrow={1}
         >
-          <Text color={LABEL} bold>
-            latest from agent
-          </Text>
-          <Text color={BODY} wrap="truncate">
-            {lastAssistantMsg.text.slice(0, 500)}
-          </Text>
-          {messages.filter((m) => m.type === "assistant_message").length >
-            1 && (
-            <Text color={DIM}>
-              ─ ─ scroll up for{" "}
-              {messages.filter((m) => m.type === "assistant_message").length -
-                1}{" "}
-              earlier messages ─ ─
+          <Box justifyContent="space-between">
+            <Text color={LABEL} bold>
+              latest from agent
             </Text>
+            {totalLines > availableLines && (
+              <Text color={DIM}>
+                ↕ {scrollOffset + 1}-{Math.min(scrollOffset + availableLines, totalLines)}/{totalLines}
+              </Text>
+            )}
+          </Box>
+          {msgLines.slice(scrollOffset, scrollOffset + availableLines).map((line, i) => (
+            <Text key={i} color={BODY}>
+              {line}
+            </Text>
+          ))}
+          {scrollOffset < maxScroll && (
+            <Text color={DIM}>↓ {maxScroll - scrollOffset} more lines</Text>
           )}
         </Box>
       )}
 
-      <Box marginTop={1} gap={2}>
-        <Text color={DIM}>esc</Text>
-        <Text color={BODY}>back</Text>
+      <Box gap={1}>
+        <Text backgroundColor={DIM} color="#000000" bold> esc </Text>
+        <Text color={BODY}> back</Text>
         {agent.status === "RUNNING" && (
           <>
-            <Text color={AMBER}>f</Text>
-            <Text color={BODY}>follow-up</Text>
-            <Text color={AMBER}>s</Text>
-            <Text color={BODY}>stop</Text>
+            <Text backgroundColor={AMBER} color="#000000" bold> f </Text>
+            <Text color={BODY}> follow-up</Text>
+            <Text backgroundColor={AMBER} color="#000000" bold> s </Text>
+            <Text color={BODY}> stop</Text>
           </>
         )}
-        <Text color={AMBER}>d</Text>
-        <Text color={BODY}>delete</Text>
-        <Text color={AMBER}>o</Text>
-        <Text color={BODY}>open in browser</Text>
+        <Text backgroundColor={AMBER} color="#000000" bold> d </Text>
+        <Text color={BODY}> delete</Text>
+        <Text backgroundColor={AMBER} color="#000000" bold> o </Text>
+        <Text color={BODY}> open in browser</Text>
+        {totalLines > availableLines && (
+          <>
+            <Text backgroundColor={DIM} color="#000000" bold> ↑↓ </Text>
+            <Text color={BODY}> scroll</Text>
+          </>
+        )}
       </Box>
     </Box>
   );

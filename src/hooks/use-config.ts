@@ -6,6 +6,7 @@ interface UseConfigResult {
   config: AppConfig | null;
   loading: boolean;
   save: (config: AppConfig) => Promise<void>;
+  reset: () => void;
 }
 
 export function useConfig(): UseConfigResult {
@@ -31,5 +32,9 @@ export function useConfig(): UseConfigResult {
     setConfig(newConfig);
   }, []);
 
-  return { config, loading, save };
+  const reset = useCallback(() => {
+    setConfig(null);
+  }, []);
+
+  return { config, loading, save, reset };
 }
