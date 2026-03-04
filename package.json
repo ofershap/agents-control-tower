@@ -1,0 +1,62 @@
+{
+  "name": "agents-control-tower",
+  "version": "0.1.0",
+  "description": "Launch, watch, and command your Cursor agents from one terminal",
+  "type": "module",
+  "bin": {
+    "agents-control-tower": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx src/index.tsx",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "cursor",
+    "agents",
+    "cloud-agents",
+    "tui",
+    "terminal",
+    "dashboard",
+    "control-tower",
+    "ai-agents",
+    "ink",
+    "cli"
+  ],
+  "author": "Ofer Shapira",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ofershap/agents-control-tower.git"
+  },
+  "homepage": "https://github.com/ofershap/agents-control-tower",
+  "bugs": {
+    "url": "https://github.com/ofershap/agents-control-tower/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@inkjs/ui": "^2.0.0",
+    "ink": "^5.1.0",
+    "open": "^10.1.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "@types/react": "^18.3.18",
+    "prettier": "^3.4.0",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
