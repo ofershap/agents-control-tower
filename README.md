@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="agents-control-tower" width="100" height="100" />
+  <img src="assets/logo.png" alt="agents-control-tower" width="140" height="140" />
 </p>
 
 <h1 align="center">agents-control-tower</h1>
