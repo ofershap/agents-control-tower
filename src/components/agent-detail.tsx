@@ -3,7 +3,6 @@ import { Box, Text, useInput, useStdout } from "ink";
 import { StatusBadge, StatusLabel } from "./status-badge.js";
 import { useElapsed } from "../hooks/use-elapsed.js";
 import { getConversation } from "../lib/cursor-api.js";
-import { DEMO_CONVERSATION_TEXT } from "../lib/demo-data.js";
 import type { CloudAgent, ConversationMessage } from "../lib/types.js";
 
 const BORDER = "#1e3a5f";
@@ -48,7 +47,9 @@ export function AgentDetail({
 
   useEffect(() => {
     if (agent.id.startsWith("demo-")) {
-      setMessages([{ id: "m1", type: "assistant_message", text: DEMO_CONVERSATION_TEXT }]);
+      import("../lib/demo-data.js").then((m) => {
+        setMessages([{ id: "m1", type: "assistant_message", text: m.DEMO_CONVERSATION_TEXT }]);
+      });
       return;
     }
     getConversation(apiKey, agent.id)

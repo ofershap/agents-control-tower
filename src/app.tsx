@@ -15,7 +15,7 @@ import { useConfig } from "./hooks/use-config.js";
 import { useRepos } from "./hooks/use-repos.js";
 import { useModels } from "./hooks/use-models.js";
 import type { Screen, AppConfig, CloudAgent, ActivityEvent } from "./lib/types.js";
-import { DEMO_AGENTS, DEMO_ACTIVITY, computeDemoStats, DEMO_CONVERSATION_TEXT } from "./lib/demo-data.js";
+import type * as DemoModule from "./lib/demo-data.js";
 
 const DIM = "#4a6785";
 const AMBER = "#e8912d";
@@ -31,19 +31,24 @@ function Dashboard({ apiKey, onReconfigure, demo }: { apiKey: string; onReconfig
   const rows = stdout?.rows ?? 24;
   const compact = cols < 80;
 
+  const [demoMod, setDemoMod] = useState<typeof DemoModule | null>(null);
+  React.useEffect(() => {
+    if (demo) import("./lib/demo-data.js").then(setDemoMod);
+  }, [demo]);
+
   const real = useCloudAgents(demo ? "" : apiKey);
   const { repos, loading: reposLoading } = useRepos(demo ? "" : apiKey);
   const { models, loading: modelsLoading } = useModels(demo ? "" : apiKey);
 
   const noop = async () => {};
-  const agents = demo ? DEMO_AGENTS : real.agents;
-  const stats = demo ? computeDemoStats(DEMO_AGENTS) : real.stats;
-  const activity = demo ? DEMO_ACTIVITY : real.activity;
+  const agents = (demo && demoMod) ? demoMod.DEMO_AGENTS : real.agents;
+  const stats = (demo && demoMod) ? demoMod.computeDemoStats(demoMod.DEMO_AGENTS) : real.stats;
+  const activity = (demo && demoMod) ? demoMod.DEMO_ACTIVITY : real.activity;
   const lastSync = demo ? new Date() : real.lastSync;
   const error = demo ? null : real.error;
-  const loading = demo ? false : real.loading;
+  const loading = (demo && !demoMod) ? true : demo ? false : real.loading;
   const refresh = demo ? noop : real.refresh;
-  const launch = demo ? (async () => DEMO_AGENTS[0]!) : real.launch;
+  const launch = demo ? (async () => agents[0]!) : real.launch;
   const followUp = demo ? noop : real.followUp;
   const stop = demo ? noop : real.stop;
   const remove = demo ? noop : real.remove;
@@ -217,6 +222,12 @@ function Dashboard({ apiKey, onReconfigure, demo }: { apiKey: string; onReconfig
       minHeight={rows}
     >
       <Header stats={stats} lastSync={lastSync} compact={compact} />
+
+      {demo && (
+        <Box justifyContent="center" marginBottom={0}>
+          <Text backgroundColor="#e8912d" color="#000000" bold> DEMO </Text>
+        </Box>
+      )}
 
       {agents.length === 0 ? (
         <EmptyState />
