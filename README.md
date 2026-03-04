@@ -111,17 +111,17 @@ Or install globally for a shorter command:
 
 ```bash
 npm install -g agents-control-tower
-act
+control-tower
 ```
 
-Both `agents-control-tower` and `act` work after global install.
+Both `agents-control-tower` and `control-tower` work after global install.
 
 First run asks for your Cursor API key. Grab one from [cursor.com/dashboard - Integrations](https://cursor.com/dashboard?tab=integrations). Saved to `~/.agents-control-tower/config.json`.
 
 Or pass it as an env var:
 
 ```bash
-CURSOR_API_KEY=sk-... act
+CURSOR_API_KEY=sk-... control-tower
 ```
 
 ---

@@ -14,7 +14,8 @@ import { useCloudAgents } from "./hooks/use-cloud-agents.js";
 import { useConfig } from "./hooks/use-config.js";
 import { useRepos } from "./hooks/use-repos.js";
 import { useModels } from "./hooks/use-models.js";
-import type { Screen, AppConfig } from "./lib/types.js";
+import type { Screen, AppConfig, CloudAgent, ActivityEvent } from "./lib/types.js";
+import { DEMO_AGENTS, DEMO_ACTIVITY, computeDemoStats, DEMO_CONVERSATION_TEXT } from "./lib/demo-data.js";
 
 const DIM = "#4a6785";
 const AMBER = "#e8912d";
@@ -23,29 +24,29 @@ const BORDER_COLOR = "#1e3a5f";
 const LABEL = "#4a90c4";
 const TEAL = "#2d7d7d";
 
-function Dashboard({ apiKey, onReconfigure }: { apiKey: string; onReconfigure: () => void }) {
+function Dashboard({ apiKey, onReconfigure, demo }: { apiKey: string; onReconfigure: () => void; demo?: boolean }) {
   const { exit } = useApp();
   const { stdout } = useStdout();
   const cols = stdout?.columns ?? 80;
   const rows = stdout?.rows ?? 24;
   const compact = cols < 80;
 
-  const {
-    agents,
-    stats,
-    activity,
-    lastSync,
-    error,
-    loading,
-    refresh,
-    launch,
-    followUp,
-    stop,
-    remove,
-  } = useCloudAgents(apiKey);
+  const real = useCloudAgents(demo ? "" : apiKey);
+  const { repos, loading: reposLoading } = useRepos(demo ? "" : apiKey);
+  const { models, loading: modelsLoading } = useModels(demo ? "" : apiKey);
 
-  const { repos, loading: reposLoading } = useRepos(apiKey);
-  const { models, loading: modelsLoading } = useModels(apiKey);
+  const noop = async () => {};
+  const agents = demo ? DEMO_AGENTS : real.agents;
+  const stats = demo ? computeDemoStats(DEMO_AGENTS) : real.stats;
+  const activity = demo ? DEMO_ACTIVITY : real.activity;
+  const lastSync = demo ? new Date() : real.lastSync;
+  const error = demo ? null : real.error;
+  const loading = demo ? false : real.loading;
+  const refresh = demo ? noop : real.refresh;
+  const launch = demo ? (async () => DEMO_AGENTS[0]!) : real.launch;
+  const followUp = demo ? noop : real.followUp;
+  const stop = demo ? noop : real.stop;
+  const remove = demo ? noop : real.remove;
 
   const [screen, setScreen] = useState<Screen>({ type: "dashboard" });
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -310,9 +311,13 @@ function Dashboard({ apiKey, onReconfigure }: { apiKey: string; onReconfigure: (
   );
 }
 
-export function App() {
+export function App({ demo }: { demo?: boolean }) {
   const { config, loading: configLoading, save, reset } = useConfig();
   const { exit } = useApp();
+
+  if (demo) {
+    return <Dashboard apiKey="" onReconfigure={() => {}} demo />;
+  }
 
   if (configLoading) {
     return (

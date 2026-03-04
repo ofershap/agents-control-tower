@@ -5,7 +5,7 @@
   "type": "module",
   "bin": {
     "agents-control-tower": "./dist/index.js",
-    "act": "./dist/index.js"
+    "control-tower": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [
