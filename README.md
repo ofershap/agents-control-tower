@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  Five cloud agents in parallel. Three in-IDE sessions.<br>
-  One is stuck. One finished and opened a PR. One is about to <code>rm -rf</code> something.<br>
+  Five cloud agents in parallel. One is stuck. One finished and opened a PR.<br>
+  One errored out 10 minutes ago and you didn't notice.<br>
   You're alt-tabbing between browser tabs trying to keep track.
 </p>
 
